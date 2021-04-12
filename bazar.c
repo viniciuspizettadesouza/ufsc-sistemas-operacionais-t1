@@ -1,5 +1,3 @@
-
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,31 +5,31 @@
 #include "imobiliaria.h"
 #include "include/arraylist.c"
  
-  #define NUM_THREADS_INQ 10
-  #define NUM_THREADS_CORRETOR 5
+  #define NUM_THREADS_CLIENTE 10
+  #define NUM_THREADS_VOLUNTARIO 5
 
-  pthread_mutex_t mutex_adiciona;
-  pthread_mutex_t mutex_remove;
+  pthread_mutex_t mutex_doa;
+  pthread_mutex_t mutex_compra;
   pthread_mutex_t mutex_move;
-  //sao os mutexes que controlarao as regioes criticas
-  pthread_mutex_t mutex_aluga;
-  pthread_mutex_t mutex_entrega;
+
+  // pthread_mutex_t mutex_aluga;
+  // pthread_mutex_t mutex_entrega;
 
    typedef struct argumentos {
-  arraylist* listaDisponveis;
-  arraylist* listaEntregues;
+  arraylist* listaCompra;
+  arraylist* listaReparo;
   arraylist* listaNovos;
   int nThread;
 
 } argumentos;
 
-typedef struct imovel_t {
+typedef struct roupa_t {
   unsigned int codigo;
-  char *endereco;
+  char *modelo;
   double preco;
-  char *bairro;
+  char *tamanho;
 
-} imovel_t;
+} roupa_t;
 
   long random_at_most(long max){
   unsigned long
@@ -45,6 +43,7 @@ typedef struct imovel_t {
   do {
    x = random();
   }
+
   // This is carefully written not to overflow
   while (num_rand - defect <= (unsigned long)x);
 
@@ -52,30 +51,32 @@ typedef struct imovel_t {
   return x/bin_size;
 }
 
-void *t_function_corretor_remove_imovel(void *arg){
+void *t_function_cliente_compra_roupa(void *arg){
   argumentos *args;
   args = (argumentos *) arg;
-  struct imovel_t* imovelRemover;
-  pthread_mutex_lock(&mutex_remove); //protecao via mutex
-  imovelRemover = (imovel_t *) arraylist_pop(args->listaDisponveis);
-  pthread_mutex_unlock(&mutex_remove);
-  printf("Corretor %i removeu o imovel da lista de disponiveis: %i \n",args->nThread, imovelRemover->codigo);
-    //imoveis_disponiveis_->remove((imovel *)arg); // corretor remove um imovel da lista
+  struct roupa_t* roupaComprar;
+  pthread_mutex_lock(&mutex_compra); 
+  roupaComprar = (roupa_t *) arraylist_pop(args->listaCompra);
+  pthread_mutex_unlock(&mutex_compra);
+  printf("Cliente %i comprou uma peça de roupa: %i \n",args->nThread, roupaComprar->codigo);
     return 0;
 }
 
-void *t_function_corretor_adiciona_imovel(void *arg){
+
+void *t_function_cliente_doa_roupa(void *arg){
   argumentos *args;
   args = (argumentos *) arg;
   int index = (int) random_at_most(args->listaNovos->size-1);
-   if(args->listaEntregues->size > 0){
-  struct imovel_t* imovelAdicionar;
-  imovelAdicionar = (imovel_t *) arraylist_get(args->listaNovos, index);
-    pthread_mutex_lock(&mutex_adiciona);
-    arraylist_add(args->listaDisponveis, imovelAdicionar); //adiciona ao pool de disponiveis
-    arraylist_remove(args->listaNovos, index); //remove do pool de novos
-    pthread_mutex_unlock(&mutex_adiciona);
-    printf("Corretor %i adicionou o imovel: %i \n",args->nThread, imovelAdicionar->codigo);
+   
+  if(args->listaCompra->size > 0){
+  struct roupa_t* doarRoupa;
+  doarRoupa = (roupa_t *) arraylist_get(args->listaNovos, index);
+    
+    pthread_mutex_lock(&mutex_doa);
+    arraylist_add(args->listaCompra, doarRoupa); 
+    arraylist_remove(args->listaNovos, index); 
+    pthread_mutex_unlock(&mutex_doa);
+    printf("Corretor %i adicionou o imovel: %i \n",args->nThread, doarRoupa->codigo);
     //imoveis_disponiveis_->insert_sorted((imovel *)arg); // corretor insere um imovel na lista
    }
    return 0;
