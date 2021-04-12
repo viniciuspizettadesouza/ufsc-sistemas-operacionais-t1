@@ -97,7 +97,7 @@ void *t_function_corretor_move_imovel(void *arg){
     return 0;
 }
 
-void *t_function_inquilino_pega_imovel(void *arg){
+void *t_function_cliente_pega_imovel(void *arg){
   while(1){
     argumentos *args;
     args = (argumentos *) arg;
@@ -109,13 +109,13 @@ void *t_function_inquilino_pega_imovel(void *arg){
     arraylist_remove(args->listaDisponveis, index); //remove do pool de novos
     //imovel* imovelAlugado = imoveis_disponiveis_->pop_back();
     pthread_mutex_unlock(&mutex_aluga);
-    printf("Inquilino %i alugou o imovel: %i \n",args->nThread, imovelAlugado->codigo);
+    printf("Cliente %i alugou o imovel: %i \n",args->nThread, imovelAlugado->codigo);
     sleep(5);
     pthread_mutex_lock(&mutex_entrega);
     arraylist_add(args->listaEntregues, imovelAlugado);
     pthread_mutex_unlock(&mutex_entrega);
     //imoveis_entregues_->push_front(imovelAlugado);
-    printf("Inquilino %i entregou o imovel: %i \n",args->nThread, imovelAlugado->codigo);
+    printf("Cliente %i entregou o imovel: %i \n",args->nThread, imovelAlugado->codigo);
     sleep(5);
   }   
 }
@@ -182,10 +182,10 @@ int main(int argc, char *argv[]) {
     arraylist_add(imoveis_novos_, novo); //joga imovel no array de imoveis novos
     }
   sleep(3);
-  pthread_t tInq[NUM_THREADS_INQ]; //array das threads inquilino
+  pthread_t tInq[NUM_THREADS_INQ]; //array das threads cliente
   pthread_t tCor[NUM_THREADS_CORRETOR]; //array das threads corretor
 
-  //void *vptr;  pthread_t tInq[NUM_THREADS_INQ]; //array das threads inquilino
+  //void *vptr;  pthread_t tInq[NUM_THREADS_INQ]; //array das threads cliente
 
 
   
@@ -212,8 +212,8 @@ while(1){
     pthread_create(&tCor[i], NULL, t_function_corretor_decideAcao, (void *) arrayArgs[i]);
   }
   for(i = 5; i < 10; i++){
-    printf("Inquilino %i se torna cliente da imobiliaria \n", i);
-    pthread_create(&tInq[i], NULL, t_function_inquilino_pega_imovel, (void *) arrayArgs[i]); // 1 eh numero da thread
+    printf("Cliente %i se torna cliente da imobiliaria \n", i);
+    pthread_create(&tInq[i], NULL, t_function_cliente_pega_imovel, (void *) arrayArgs[i]); // 1 eh numero da thread
   }
   sleep(9999);
 }
