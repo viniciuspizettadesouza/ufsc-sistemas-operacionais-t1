@@ -55,7 +55,7 @@ long random_at_most(long max)
   return x / bin_size;
 }
 
-void *t_function_cliente_compra_roupa(void *arg)
+void *t_function_voluntario_remove_roupa(void *arg)
 {
   argumentos *args;
   args = (argumentos *)arg;
@@ -63,11 +63,11 @@ void *t_function_cliente_compra_roupa(void *arg)
   pthread_mutex_lock(&mutex_compra);
   roupaComprar = (roupa_t *)arraylist_pop(args->listaCompra);
   pthread_mutex_unlock(&mutex_compra);
-  printf("Cliente %i comprou uma peça de roupa: %i \n", args->nThread, roupaComprar->codigo);
+  printf("Voluntario %i remove roupa mais antiga: %i \n", args->nThread, roupaComprar->codigo);
   return 0;
 }
 
-void *t_function_cliente_doa_roupa(void *arg)
+void *t_function_voluntario_doa_roupa(void *arg)
 {
   argumentos *args;
   args = (argumentos *)arg;
@@ -82,7 +82,7 @@ void *t_function_cliente_doa_roupa(void *arg)
     arraylist_add(args->listaCompra, doarRoupa);
     arraylist_remove(args->listaNovos, index);
     pthread_mutex_unlock(&mutex_doa);
-    printf("Cliente %i doou uma roupa: %i \n", args->nThread, doarRoupa->codigo);
+    printf("Voluntario %i doou uma roupa: %i \n", args->nThread, doarRoupa->codigo);
   }
   return 0;
 }
@@ -99,7 +99,7 @@ void *t_function_voluntario_move_roupa(void *arg)
     roupaEntregue = (roupa_t *)arraylist_pop(args->listaReparo);
     arraylist_add(args->listaCompra, roupaEntregue);
     pthread_mutex_unlock(&mutex_move);
-    printf("Voluntario %i disponibilizou o roupa: %i \n", args->nThread, roupaEntregue->codigo);
+    printf("Voluntario %i moveu uma roupa: %i \n", args->nThread, roupaEntregue->codigo);
     //roupas_disponiveis_->insert_sorted(roupas_entregues_->pop_back()); // voluntario remove roupa da lista de entregues e insere na lista de disp.
   }
   return 0;
@@ -140,7 +140,7 @@ void *t_function_voluntario_decideAcao(void *arg)
     switch (decisao)
     {
     case 0:
-      t_function_voluntario_adiciona_roupa(arg);
+      t_function_voluntario_doa_roupa(arg);
       break;
     case 1:
       t_function_voluntario_remove_roupa(arg);
