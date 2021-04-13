@@ -61,7 +61,7 @@ void *t_function_voluntario_remove_roupa(void *arg)
   args = (argumentos *)arg;
   struct roupa_t *roupaComprar;
   pthread_mutex_lock(&mutex_compra);
-  roupaComprar = (roupa_t *)arraylist_pop(args->listaCompra);
+  roupaComprar = (roupa_t *)arraylist_remove(args->listaCompra, 0);
   pthread_mutex_unlock(&mutex_compra);
   printf("Voluntario %i remove roupa mais antiga: %i \n", args->nThread, roupaComprar->codigo);
   return 0;
@@ -99,8 +99,7 @@ void *t_function_voluntario_move_roupa(void *arg)
     roupaEntregue = (roupa_t *)arraylist_pop(args->listaReparo);
     arraylist_add(args->listaCompra, roupaEntregue);
     pthread_mutex_unlock(&mutex_move);
-    printf("Voluntario %i moveu uma roupa: %i \n", args->nThread, roupaEntregue->codigo);
-    //roupas_disponiveis_->insert_sorted(roupas_entregues_->pop_back()); // voluntario remove roupa da lista de entregues e insere na lista de disp.
+    printf("Voluntario %i moveu uma roupa reparada: %i \n", args->nThread, roupaEntregue->codigo);
   }
   return 0;
 }
@@ -134,19 +133,19 @@ void *t_function_voluntario_decideAcao(void *arg)
 {
   long decisao;
   while (1)
-  {                              //loop infinito
-    decisao = random_at_most(2); // na teoria esse cara vai ser um dos 3, toda vez
+  { //loop infinito
+    decisao = random_at_most(2);
 
     switch (decisao)
     {
     case 0:
-      t_function_voluntario_doa_roupa(arg);
+      t_function_voluntario_move_roupa(arg);
       break;
     case 1:
-      t_function_voluntario_remove_roupa(arg);
+      t_function_voluntario_doa_roupa(arg);
       break;
     case 2:
-      t_function_voluntario_move_roupa(arg);
+      t_function_voluntario_remove_roupa(arg);
       break;
     default:
       break;
