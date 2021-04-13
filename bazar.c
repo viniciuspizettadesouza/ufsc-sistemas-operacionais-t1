@@ -33,28 +33,6 @@ typedef struct roupa_t
 
 } roupa_t;
 
-long random_at_most(long max)
-{
-  unsigned long
-
-      num_bins = (unsigned long)max + 1,
-      num_rand = (unsigned long)RAND_MAX + 1,
-      bin_size = num_rand / num_bins,
-      defect = num_rand % num_bins;
-
-  long x;
-  do
-  {
-    x = random();
-  }
-
-  // This is carefully written not to overflow
-  while (num_rand - defect <= (unsigned long)x);
-
-  // Truncated division is intentional
-  return x / bin_size;
-}
-
 void *t_function_voluntario_remove_roupa(void *arg)
 {
   argumentos *args;
@@ -71,7 +49,7 @@ void *t_function_voluntario_doa_roupa(void *arg)
 {
   argumentos *args;
   args = (argumentos *)arg;
-  int index = (int)random_at_most(args->listaRoupasNovas->size - 1);
+  int index = rand() % args->listaRoupasNovas->size;
 
   if (args->listaCompra->size > 0)
   {
@@ -111,7 +89,7 @@ void *t_function_cliente_pega_roupa(void *arg)
     argumentos *args;
     args = (argumentos *)arg;
 
-    int index = (int)random_at_most(args->listaCompra->size - 1); //-1 pois eh o tamanho e n a posicao do array
+    int index = rand() % args->listaCompra->size;
     struct roupa_t *roupaAlugado;
     roupaAlugado = (roupa_t *)arraylist_get(args->listaCompra, index);
     pthread_mutex_lock(&mutex_aluga);
@@ -133,9 +111,8 @@ void *t_function_voluntario_decideAcao(void *arg)
 {
   long decisao;
   while (1)
-  { //loop infinito
-    decisao = random_at_most(2);
-
+  {
+    decisao = rand() % 3;
     switch (decisao)
     {
     case 0:
@@ -169,12 +146,12 @@ int main(int argc, char *argv[])
   for (i = 0; i < 100; i++)
   {
     struct roupa_t *disp = malloc(sizeof(roupa_t));
-    disp->codigo = i + 1; //nao pode ser random aqui porque deve ser UNIQUE
+    disp->codigo = i + 1;
     char *tamanho;
-    tamanho = (char *)'a'; //apenas um placeholder pro tamanho
+    tamanho = (char *)'a';
     disp->tamanho = tamanho;
-    disp->preco = (double)random_at_most(1000); //gera valor aleatorio pro roupa
-    arraylist_add(roupas_disponiveis_, disp);   //adiciona roupa no array de roupas disponiveis
+    disp->preco = rand() % 1001;
+    arraylist_add(roupas_disponiveis_, disp); //adiciona roupa no array de roupas disponiveis
   }
 
   for (i = 0; i < 100; i++)
@@ -182,10 +159,10 @@ int main(int argc, char *argv[])
     struct roupa_t *novo = malloc(sizeof(roupa_t));
     novo->codigo = i + 101;
     char *tamanho;
-    tamanho = (char *)'a'; //apenas um placeholder pro tamanho
+    tamanho = (char *)'a';
     novo->tamanho = tamanho;
-    novo->preco = (double)random_at_most(1000); //gera valor aleatorio pro roupa entre 0 e 1000
-    arraylist_add(roupas_novas_, novo);         //adiciona roupa no array de roupas novas
+    novo->preco = rand() % 1001;
+    arraylist_add(roupas_novas_, novo); //adiciona roupa no array de roupas novas
   }
   sleep(3);
   pthread_t tCli[NUM_THREADS_CLIENTE];    //array das threads cliente
