@@ -156,48 +156,40 @@ void *t_function_voluntario_decideAcao(void *arg)
 
 int main(int argc, char *argv[])
 {
-
-  // ArrayListroupa* roupas_disponiveis_ = new ArrayListRoupa();
   arraylist *roupas_disponiveis_;
   roupas_disponiveis_ = arraylist_create();
 
-  //ArrayListRoupa* roupas_entregues_ = new ArrayListRoupa();
   arraylist *roupas_entregues_;
   roupas_entregues_ = arraylist_create();
 
-  //ArrayListRoupa* roupas_novos_ = new ArrayListRoupa();
-  arraylist *roupas_novos_;
-  roupas_novos_ = arraylist_create();
+  arraylist *roupas_novas_;
+  roupas_novas_ = arraylist_create();
+
   int i;
   for (i = 0; i < 100; i++)
-  { //inicializa a lista de disponiveis com 20 roupas
+  {
     struct roupa_t *disp = malloc(sizeof(roupa_t));
     disp->codigo = i + 1; //nao pode ser random aqui porque deve ser UNIQUE
     char *tamanho;
     tamanho = (char *)'a'; //apenas um placeholder pro tamanho
     disp->tamanho = tamanho;
     disp->preco = (double)random_at_most(1000); //gera valor aleatorio pro roupa
-    arraylist_add(roupas_disponiveis_, disp);
-    //roupas_disponiveis_->push_back(disp); //joga roupa no array de roupas disp
+    arraylist_add(roupas_disponiveis_, disp);   //adiciona roupa no array de roupas disponiveis
   }
 
   for (i = 0; i < 100; i++)
-  { //inicializa a lista de roupas novos a serem inseridos na lista de disponveis pelos voluntarios
-
+  {
     struct roupa_t *novo = malloc(sizeof(roupa_t));
-    novo->codigo = i + 101; //nao pode ser random aqui porque deve ser UNIQUE, 21 pois eh o primeiro codigo apos os ja disponveis
+    novo->codigo = i + 101;
     char *tamanho;
     tamanho = (char *)'a'; //apenas um placeholder pro tamanho
     novo->tamanho = tamanho;
     novo->preco = (double)random_at_most(1000); //gera valor aleatorio pro roupa entre 0 e 1000
-    arraylist_add(roupas_novos_, novo);         //joga roupa no array de roupas novos
+    arraylist_add(roupas_novas_, novo);         //adiciona roupa no array de roupas novas
   }
   sleep(3);
   pthread_t tCli[NUM_THREADS_CLIENTE];    //array das threads cliente
   pthread_t tVol[NUM_THREADS_VOLUNTARIO]; //array das threads voluntario
-
-  long *nomet1 = (long *)malloc(sizeof(long));
-  *nomet1 = 1;
 
   argumentos *arrayArgs[10];
 
@@ -206,7 +198,7 @@ int main(int argc, char *argv[])
     struct argumentos *args = malloc(sizeof(argumentos));
     args->listaCompra = roupas_disponiveis_;
     args->listaReparo = roupas_entregues_;
-    args->listaRoupasNovas = roupas_novos_;
+    args->listaRoupasNovas = roupas_novas_;
     args->nThread = i + 1;
     arrayArgs[i] = args;
   }
