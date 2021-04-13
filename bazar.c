@@ -100,7 +100,7 @@ void *t_function_voluntario_move_roupa(void *arg)
     arraylist_add(args->listaCompra, roupaEntregue);
     pthread_mutex_unlock(&mutex_move);
     printf("Voluntario %i disponibilizou o roupa: %i \n", args->nThread, roupaEntregue->codigo);
-    //imoveis_disponiveis_->insert_sorted(imoveis_entregues_->pop_back()); // voluntario remove roupa da lista de entregues e insere na lista de disp.
+    //roupas_disponiveis_->insert_sorted(roupas_entregues_->pop_back()); // voluntario remove roupa da lista de entregues e insere na lista de disp.
   }
   return 0;
 }
@@ -117,14 +117,14 @@ void *t_function_cliente_pega_roupa(void *arg)
     roupaAlugado = (roupa_t *)arraylist_get(args->listaCompra, index);
     pthread_mutex_lock(&mutex_aluga);
     arraylist_remove(args->listaCompra, index); //remove do pool de novos
-    //roupa* roupaAlugado = imoveis_disponiveis_->pop_back();
+    //roupa* roupaAlugado = roupas_disponiveis_->pop_back();
     pthread_mutex_unlock(&mutex_aluga);
     printf("Cliente %i alugou o roupa: %i \n", args->nThread, roupaAlugado->codigo);
     sleep(5);
     pthread_mutex_lock(&mutex_entrega);
     arraylist_add(args->listaReparo, roupaAlugado);
     pthread_mutex_unlock(&mutex_entrega);
-    //imoveis_entregues_->push_front(roupaAlugado);
+    //roupas_entregues_->push_front(roupaAlugado);
     printf("Cliente %i entregou o roupa: %i \n", args->nThread, roupaAlugado->codigo);
     sleep(5);
   }
@@ -158,32 +158,32 @@ void *t_function_voluntario_decideAcao(void *arg)
 int main(int argc, char *argv[])
 {
 
-  // ArrayListroupa* imoveis_disponiveis_ = new ArrayListRoupa();
-  arraylist *imoveis_disponiveis_;
-  imoveis_disponiveis_ = arraylist_create();
+  // ArrayListroupa* roupas_disponiveis_ = new ArrayListRoupa();
+  arraylist *roupas_disponiveis_;
+  roupas_disponiveis_ = arraylist_create();
 
-  //ArrayListRoupa* imoveis_entregues_ = new ArrayListRoupa();
-  arraylist *imoveis_entregues_;
-  imoveis_entregues_ = arraylist_create();
+  //ArrayListRoupa* roupas_entregues_ = new ArrayListRoupa();
+  arraylist *roupas_entregues_;
+  roupas_entregues_ = arraylist_create();
 
-  //ArrayListRoupa* imoveis_novos_ = new ArrayListRoupa();
-  arraylist *imoveis_novos_;
-  imoveis_novos_ = arraylist_create();
+  //ArrayListRoupa* roupas_novos_ = new ArrayListRoupa();
+  arraylist *roupas_novos_;
+  roupas_novos_ = arraylist_create();
   int i;
   for (i = 0; i < 100; i++)
-  { //inicializa a lista de disponiveis com 20 imoveis
+  { //inicializa a lista de disponiveis com 20 roupas
     struct roupa_t *disp = malloc(sizeof(roupa_t));
     disp->codigo = i + 1; //nao pode ser random aqui porque deve ser UNIQUE
     char *tamanho;
     tamanho = (char *)'a'; //apenas um placeholder pro tamanho
     disp->tamanho = tamanho;
     disp->preco = (double)random_at_most(1000); //gera valor aleatorio pro roupa
-    arraylist_add(imoveis_disponiveis_, disp);
-    //imoveis_disponiveis_->push_back(disp); //joga roupa no array de imoveis disp
+    arraylist_add(roupas_disponiveis_, disp);
+    //roupas_disponiveis_->push_back(disp); //joga roupa no array de roupas disp
   }
 
   for (i = 0; i < 100; i++)
-  { //inicializa a lista de imoveis novos a serem inseridos na lista de disponveis pelos voluntarios
+  { //inicializa a lista de roupas novos a serem inseridos na lista de disponveis pelos voluntarios
 
     struct roupa_t *novo = malloc(sizeof(roupa_t));
     novo->codigo = i + 101; //nao pode ser random aqui porque deve ser UNIQUE, 21 pois eh o primeiro codigo apos os ja disponveis
@@ -191,11 +191,11 @@ int main(int argc, char *argv[])
     tamanho = (char *)'a'; //apenas um placeholder pro tamanho
     novo->tamanho = tamanho;
     novo->preco = (double)random_at_most(1000); //gera valor aleatorio pro roupa entre 0 e 1000
-    arraylist_add(imoveis_novos_, novo);        //joga roupa no array de imoveis novos
+    arraylist_add(roupas_novos_, novo);         //joga roupa no array de roupas novos
   }
   sleep(3);
-  pthread_t tInq[NUM_THREADS_CLIENTE];    //array das threads cliente
-  pthread_t tCor[NUM_THREADS_VOLUNTARIO]; //array das threads voluntario
+  pthread_t tCli[NUM_THREADS_CLIENTE];    //array das threads cliente
+  pthread_t tVol[NUM_THREADS_VOLUNTARIO]; //array das threads voluntario
 
   long *nomet1 = (long *)malloc(sizeof(long));
   *nomet1 = 1;
@@ -205,9 +205,9 @@ int main(int argc, char *argv[])
   for (i = 0; i < 10; i++)
   {
     struct argumentos *args = malloc(sizeof(argumentos));
-    args->listaCompra = imoveis_disponiveis_;
-    args->listaReparo = imoveis_entregues_;
-    args->listaNovos = imoveis_novos_;
+    args->listaCompra = roupas_disponiveis_;
+    args->listaReparo = roupas_entregues_;
+    args->listaNovos = roupas_novos_;
     args->nThread = i + 1;
     arrayArgs[i] = args;
   }
@@ -216,13 +216,13 @@ int main(int argc, char *argv[])
   {
     for (i = 0; i < 5; i++)
     {
-      printf("Voluntario %i se junta a imobiliaria \n", i + 1);
-      pthread_create(&tCor[i], NULL, t_function_voluntario_decideAcao, (void *)arrayArgs[i]);
+      printf("Voluntario %i se junta a bazar \n", i + 1);
+      pthread_create(&tVol[i], NULL, t_function_voluntario_decideAcao, (void *)arrayArgs[i]);
     }
     for (i = 5; i < 10; i++)
     {
-      printf("Cliente %i se torna cliente da imobiliaria \n", i);
-      pthread_create(&tInq[i], NULL, t_function_cliente_pega_roupa, (void *)arrayArgs[i]); // 1 eh numero da thread
+      printf("Cliente %i se torna cliente da bazar \n", i);
+      pthread_create(&tCli[i], NULL, t_function_cliente_pega_roupa, (void *)arrayArgs[i]); // 1 eh numero da thread
     }
     sleep(9999);
   }
