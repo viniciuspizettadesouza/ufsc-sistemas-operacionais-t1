@@ -19,7 +19,7 @@ typedef struct argumentos
 {
   arraylist *listaCompra;
   arraylist *listaReparo;
-  arraylist *listaNovos;
+  arraylist *listaRoupasNovas;
   int nThread;
 
 } argumentos;
@@ -71,16 +71,16 @@ void *t_function_voluntario_doa_roupa(void *arg)
 {
   argumentos *args;
   args = (argumentos *)arg;
-  int index = (int)random_at_most(args->listaNovos->size - 1);
+  int index = (int)random_at_most(args->listaRoupasNovas->size - 1);
 
   if (args->listaCompra->size > 0)
   {
     struct roupa_t *doarRoupa;
-    doarRoupa = (roupa_t *)arraylist_get(args->listaNovos, index);
+    doarRoupa = (roupa_t *)arraylist_get(args->listaRoupasNovas, index);
 
     pthread_mutex_lock(&mutex_doa);
     arraylist_add(args->listaCompra, doarRoupa);
-    arraylist_remove(args->listaNovos, index);
+    arraylist_remove(args->listaRoupasNovas, index);
     pthread_mutex_unlock(&mutex_doa);
     printf("Voluntario %i doou uma roupa: %i \n", args->nThread, doarRoupa->codigo);
   }
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
     struct argumentos *args = malloc(sizeof(argumentos));
     args->listaCompra = roupas_disponiveis_;
     args->listaReparo = roupas_entregues_;
-    args->listaNovos = roupas_novos_;
+    args->listaRoupasNovas = roupas_novos_;
     args->nThread = i + 1;
     arrayArgs[i] = args;
   }
