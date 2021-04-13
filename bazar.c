@@ -9,15 +9,15 @@
 #define NUM_THREADS_VOLUNTARIO 5
 
 pthread_mutex_t mutex_doa;
-pthread_mutex_t mutex_compra;
+pthread_mutex_t mutex_remove;
 pthread_mutex_t mutex_move;
 
-pthread_mutex_t mutex_aluga;
-pthread_mutex_t mutex_entrega;
+pthread_mutex_t mutex_compra;
+pthread_mutex_t mutex_cliente_doa;
 
 typedef struct argumentos
 {
-  arraylist *listaCompra;
+  arraylist *listaVenda;
   arraylist *listaReparo;
   arraylist *listaRoupasNovas;
   int nThread;
@@ -37,11 +37,11 @@ void *t_function_voluntario_remove_roupa(void *arg)
 {
   argumentos *args;
   args = (argumentos *)arg;
-  struct roupa_t *roupaComprar;
-  pthread_mutex_lock(&mutex_compra);
-  roupaComprar = (roupa_t *)arraylist_remove(args->listaCompra, 0);
-  pthread_mutex_unlock(&mutex_compra);
-  printf("Voluntario %i remove roupa mais antiga: %i \n", args->nThread, roupaComprar->codigo);
+  struct roupa_t *roupaRemovida;
+  pthread_mutex_lock(&mutex_remove);
+  roupaRemovida = (roupa_t *)arraylist_remove(args->listaVenda, 0);
+  pthread_mutex_unlock(&mutex_remove);
+  printf("Voluntario %i remove roupa mais antiga: %i \n", args->nThread, roupaRemovida->codigo);
   return 0;
 }
 
@@ -51,13 +51,13 @@ void *t_function_voluntario_doa_roupa(void *arg)
   args = (argumentos *)arg;
   int index = rand() % args->listaRoupasNovas->size;
 
-  if (args->listaCompra->size > 0)
+  if (args->listaVenda->size > 0)
   {
     struct roupa_t *doarRoupa;
     doarRoupa = (roupa_t *)arraylist_get(args->listaRoupasNovas, index);
 
     pthread_mutex_lock(&mutex_doa);
-    arraylist_add(args->listaCompra, doarRoupa);
+    arraylist_add(args->listaVenda, doarRoupa);
     arraylist_remove(args->listaRoupasNovas, index);
     pthread_mutex_unlock(&mutex_doa);
     printf("Voluntario %i doou uma roupa: %i \n", args->nThread, doarRoupa->codigo);
@@ -72,40 +72,48 @@ void *t_function_voluntario_move_roupa(void *arg)
 
   if (args->listaReparo->size > 0)
   {
-    struct roupa_t *roupaEntregue;
+    struct roupa_t *roupaMovida;
     pthread_mutex_lock(&mutex_move);
-    roupaEntregue = (roupa_t *)arraylist_pop(args->listaReparo);
-    arraylist_add(args->listaCompra, roupaEntregue);
+    roupaMovida = (roupa_t *)arraylist_pop(args->listaReparo);
+    arraylist_add(args->listaVenda, roupaMovida);
     pthread_mutex_unlock(&mutex_move);
-    printf("Voluntario %i moveu uma roupa reparada: %i \n", args->nThread, roupaEntregue->codigo);
+    printf("Voluntario %i moveu uma roupa: %i \n", args->nThread, roupaMovida->codigo);
   }
   return 0;
 }
 
-void *t_function_cliente_pega_roupa(void *arg)
+void *t_function_cliente_compra_roupa(void *arg)
 {
   while (1)
   {
     argumentos *args;
     args = (argumentos *)arg;
 
-    int index = rand() % args->listaCompra->size;
-    struct roupa_t *roupaAlugado;
-    roupaAlugado = (roupa_t *)arraylist_get(args->listaCompra, index);
-    pthread_mutex_lock(&mutex_aluga);
-    arraylist_remove(args->listaCompra, index); //remove do pool de novos
-    //roupa* roupaAlugado = roupas_disponiveis_->pop_back();
-    pthread_mutex_unlock(&mutex_aluga);
-    printf("Cliente %i alugou o roupa: %i \n", args->nThread, roupaAlugado->codigo);
+    int index = rand() % args->listaVenda->size;
+    struct roupa_t *roupaComprada;
+    roupaComprada = (roupa_t *)arraylist_get(args->listaVenda, index);
+    pthread_mutex_lock(&mutex_compra);
+    arraylist_remove(args->listaVenda, index); //remove do pool de novos
+    pthread_mutex_unlock(&mutex_compra);
+    printf("Cliente %i compra o roupa: %i \n", args->nThread, roupaComprada->codigo);
     sleep(5);
-    pthread_mutex_lock(&mutex_entrega);
-    arraylist_add(args->listaReparo, roupaAlugado);
-    pthread_mutex_unlock(&mutex_entrega);
-    //roupas_entregues_->push_front(roupaAlugado);
-    printf("Cliente %i entregou o roupa: %i \n", args->nThread, roupaAlugado->codigo);
+    
+    pthread_mutex_lock(&mutex_cliente_doa);
+    arraylist_add(args->listaReparo, roupaComprada);
+    pthread_mutex_unlock(&mutex_cliente_doa);
+    printf("Cliente %i doa o roupa: %i \n", args->nThread, roupaComprada->codigo);
     sleep(5);
   }
 }
+
+void *t_function_cliente_doa_roupa(void *arg)
+{
+
+}
+
+
+
+
 
 void *t_function_voluntario_decideAcao(void *arg)
 {
@@ -133,11 +141,11 @@ void *t_function_voluntario_decideAcao(void *arg)
 
 int main(int argc, char *argv[])
 {
-  arraylist *roupas_disponiveis_;
-  roupas_disponiveis_ = arraylist_create();
+  arraylist *roupas_venda_;
+  roupas_venda_ = arraylist_create();
 
-  arraylist *roupas_entregues_;
-  roupas_entregues_ = arraylist_create();
+  arraylist *roupas_reparo_;
+  roupas_reparo_ = arraylist_create();
 
   arraylist *roupas_novas_;
   roupas_novas_ = arraylist_create();
@@ -151,7 +159,7 @@ int main(int argc, char *argv[])
     tamanho = (char *)'a';
     disp->tamanho = tamanho;
     disp->preco = rand() % 1001;
-    arraylist_add(roupas_disponiveis_, disp); //adiciona roupa no array de roupas disponiveis
+    arraylist_add(roupas_venda_, disp); //adiciona roupa no array de roupas disponiveis
   }
 
   for (i = 0; i < 100; i++)
@@ -173,8 +181,8 @@ int main(int argc, char *argv[])
   for (i = 0; i < 10; i++)
   {
     struct argumentos *args = malloc(sizeof(argumentos));
-    args->listaCompra = roupas_disponiveis_;
-    args->listaReparo = roupas_entregues_;
+    args->listaVenda = roupas_venda_;
+    args->listaReparo = roupas_reparo_;
     args->listaRoupasNovas = roupas_novas_;
     args->nThread = i + 1;
     arrayArgs[i] = args;
