@@ -82,6 +82,30 @@ void *t_function_voluntario_move_roupa(void *arg)
   return 0;
 }
 
+void *t_function_voluntario_acao(void *arg)
+{
+  long decisao;
+  while (1)
+  {
+    decisao = rand() % 3;
+    switch (decisao)
+    {
+    case 0:
+      t_function_voluntario_move_roupa(arg);
+      break;
+    case 1:
+      t_function_voluntario_doa_roupa(arg);
+      break;
+    case 2:
+      t_function_voluntario_remove_roupa(arg);
+      break;
+    default:
+      break;
+    }
+    sleep(3);
+  }
+}
+
 void *t_function_cliente_compra_roupa(void *arg)
 {
   argumentos *args;
@@ -129,30 +153,6 @@ void *t_function_cliente_acao(void *arg)
   }
 }
 
-void *t_function_voluntario_decideAcao(void *arg)
-{
-  long decisao;
-  while (1)
-  {
-    decisao = rand() % 3;
-    switch (decisao)
-    {
-    case 0:
-      t_function_voluntario_move_roupa(arg);
-      break;
-    case 1:
-      t_function_voluntario_doa_roupa(arg);
-      break;
-    case 2:
-      t_function_voluntario_remove_roupa(arg);
-      break;
-    default:
-      break;
-    }
-    sleep(3);
-  }
-}
-
 int main(int argc, char *argv[])
 {
   arraylist *roupas_venda_;
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     tamanho = (char *)'a';
     disp->tamanho = tamanho;
     disp->preco = rand() % 1001;
-    arraylist_add(roupas_venda_, disp); //adiciona roupa no array de roupas disponiveis
+    arraylist_add(roupas_venda_, disp);
   }
 
   for (i = 0; i < 100; i++)
@@ -184,11 +184,11 @@ int main(int argc, char *argv[])
     tamanho = (char *)'a';
     novo->tamanho = tamanho;
     novo->preco = rand() % 1001;
-    arraylist_add(roupas_novas_, novo); //adiciona roupa no array de roupas novas
+    arraylist_add(roupas_novas_, novo);
   }
   sleep(3);
-  pthread_t tCli[NUM_THREADS_CLIENTE];    //array das threads cliente
-  pthread_t tVol[NUM_THREADS_VOLUNTARIO]; //array das threads voluntario
+  pthread_t tCli[NUM_THREADS_CLIENTE];
+  pthread_t tVol[NUM_THREADS_VOLUNTARIO];
 
   argumentos *arrayArgs[10];
 
@@ -207,12 +207,12 @@ int main(int argc, char *argv[])
     for (i = 0; i < 5; i++)
     {
       printf("Voluntario %i se junta a bazar \n", i + 1);
-      pthread_create(&tVol[i], NULL, t_function_voluntario_decideAcao, (void *)arrayArgs[i]);
+      pthread_create(&tVol[i], NULL, t_function_voluntario_acao, (void *)arrayArgs[i]);
     }
     for (i = 5; i < 10; i++)
     {
       printf("Cliente %i se torna cliente da bazar \n", i);
-      pthread_create(&tCli[i], NULL, t_function_cliente_acao, (void *)arrayArgs[i]); // 1 eh numero da thread
+      pthread_create(&tCli[i], NULL, t_function_cliente_acao, (void *)arrayArgs[i]);
     }
     sleep(9999);
   }
