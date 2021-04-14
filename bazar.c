@@ -84,36 +84,50 @@ void *t_function_voluntario_move_roupa(void *arg)
 
 void *t_function_cliente_compra_roupa(void *arg)
 {
-  while (1)
-  {
-    argumentos *args;
-    args = (argumentos *)arg;
+  argumentos *args;
+  args = (argumentos *)arg;
 
-    int index = rand() % args->listaVenda->size;
-    struct roupa_t *roupaComprada;
-    roupaComprada = (roupa_t *)arraylist_get(args->listaVenda, index);
-    pthread_mutex_lock(&mutex_compra);
-    arraylist_remove(args->listaVenda, index); //remove do pool de novos
-    pthread_mutex_unlock(&mutex_compra);
-    printf("Cliente %i compra o roupa: %i \n", args->nThread, roupaComprada->codigo);
-    sleep(5);
-    
-    pthread_mutex_lock(&mutex_cliente_doa);
-    arraylist_add(args->listaReparo, roupaComprada);
-    pthread_mutex_unlock(&mutex_cliente_doa);
-    printf("Cliente %i doa o roupa: %i \n", args->nThread, roupaComprada->codigo);
-    sleep(5);
-  }
+  int index = rand() % args->listaVenda->size;
+  struct roupa_t *roupaComprada;
+  roupaComprada = (roupa_t *)arraylist_get(args->listaVenda, index);
+
+  pthread_mutex_lock(&mutex_compra);
+  arraylist_remove(args->listaVenda, index);
+  pthread_mutex_unlock(&mutex_compra);
+  printf("Cliente %i compra o roupa: %i \n", args->nThread, roupaComprada->codigo);
+  sleep(5);
 }
 
 void *t_function_cliente_doa_roupa(void *arg)
 {
+  argumentos *args;
+  args = (argumentos *)arg;
 
+  int index = rand() % args->listaRoupasNovas->size;
+  struct roupa_t *roupaDoada;
+  roupaDoada = (roupa_t *)arraylist_get(args->listaRoupasNovas, index);
+
+  pthread_mutex_lock(&mutex_cliente_doa);
+  arraylist_add(args->listaReparo, roupaDoada);
+  pthread_mutex_unlock(&mutex_cliente_doa);
+  printf("Cliente %i doa o roupa: %i \n", args->nThread, roupaDoada->codigo);
+  sleep(5);
 }
 
+void *t_function_cliente_acao(void *arg)
+{
+  long decisao;
+  while (1)
+  {
+    decisao = rand() % 2;
+    if (decisao == 0)
+      t_function_cliente_compra_roupa(arg);
+    else
+      t_function_cliente_doa_roupa(arg);
 
-
-
+    sleep(3);
+  }
+}
 
 void *t_function_voluntario_decideAcao(void *arg)
 {
@@ -198,7 +212,7 @@ int main(int argc, char *argv[])
     for (i = 5; i < 10; i++)
     {
       printf("Cliente %i se torna cliente da bazar \n", i);
-      pthread_create(&tCli[i], NULL, t_function_cliente_pega_roupa, (void *)arrayArgs[i]); // 1 eh numero da thread
+      pthread_create(&tCli[i], NULL, t_function_cliente_acao, (void *)arrayArgs[i]); // 1 eh numero da thread
     }
     sleep(9999);
   }
